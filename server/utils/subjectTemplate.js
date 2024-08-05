@@ -5,7 +5,7 @@ const subjectTemplate = (req, i) => {
     totalClasses: 0,
     classesBunked: 0,
     semester: req.body.semester,
-    owner: req.user._id,
+    owner: req.user.redId,
     subjectType: "regular",
   };
 };

@@ -1,19 +1,16 @@
-const AWS = require('aws-sdk');
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 const jwt = require('jsonwebtoken');
 
-AWS.config.update({
-  region: process.env.AWS_REGION,
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  sessionToken:process.env.AWS_SESSION_TOKEN
-});
+let dynamoDB;
 
-const dynamoDB = new AWS.DynamoDB.DocumentClient();
-const tableName = "Users";
+const init = (awsServices) => {
+  dynamoDB = awsServices.docClient;
+};
 
 const createUser = async (userData) => {
+  const tableName = "Users";
+  
   const user = {
     ...userData,
     password: await bcrypt.hash(userData.password, 8),
@@ -24,13 +21,13 @@ const createUser = async (userData) => {
     TableName: tableName,
     Item: user,
   };
-
   await dynamoDB.put(params).promise();
   return user;
 };
 
-// Function to get user by email
 const getUserByEmail = async (email) => {
+  const tableName = "Users";
+
   const params = {
     TableName: tableName,
     IndexName: "email-index",
@@ -39,14 +36,14 @@ const getUserByEmail = async (email) => {
       ":email": email,
     },
   };
-
   const result = await dynamoDB.query(params).promise();
   return result.Items[0];
 };
 
-// Function to generate auth token
 const generateAuthToken = async (user) => {
-  const token = jwt.sign({ _id: user.regdId }, process.env.JWTKEY);
+  const tableName = "Users";
+
+  const token = jwt.sign({ _id: user.regdId }, "rishivarmanrocks");
   user.tokens.push({ token });
 
   const params = {
@@ -62,7 +59,6 @@ const generateAuthToken = async (user) => {
   return token;
 };
 
-// Function to find user by credentials
 const findByCredentials = async (email, password) => {
   const user = await getUserByEmail(email);
 
@@ -78,17 +74,17 @@ const findByCredentials = async (email, password) => {
   return user;
 };
 
-// Function to remove sensitive data before sending response
 const removeSensitiveData = (user) => {
   const { password, tokens, ...userWithoutSensitiveData } = user;
   return userWithoutSensitiveData;
 };
 
-// Function to delete user and their related data
 const deleteUser = async (regdId) => {
-  // Deleting subjects and attendances related to the user
+  const subjectTable = "Subjects";
+  const attendanceTable = "Attendances";
+
   const subjectParams = {
-    TableName: "Subjects",
+    TableName: subjectTable,
     IndexName: "owner-index",
     KeyConditionExpression: "owner = :owner",
     ExpressionAttributeValues: {
@@ -99,7 +95,7 @@ const deleteUser = async (regdId) => {
 
   for (const subject of subjects.Items) {
     const attendanceParams = {
-      TableName: "Attendances",
+      TableName: attendanceTable,
       IndexName: "subject-index",
       KeyConditionExpression: "attendanceOf = :attendanceOf",
       ExpressionAttributeValues: {
@@ -110,7 +106,7 @@ const deleteUser = async (regdId) => {
 
     for (const attendance of attendances.Items) {
       const deleteAttendanceParams = {
-        TableName: "Attendances",
+        TableName: attendanceTable,
         Key: {
           id: attendance.id,
         },
@@ -119,7 +115,7 @@ const deleteUser = async (regdId) => {
     }
 
     const deleteSubjectParams = {
-      TableName: "Subjects",
+      TableName: subjectTable,
       Key: {
         id: subject.id,
       },
@@ -127,9 +123,8 @@ const deleteUser = async (regdId) => {
     await dynamoDB.delete(deleteSubjectParams).promise();
   }
 
-  // Deleting user
   const userParams = {
-    TableName: tableName,
+    TableName: "Users",
     Key: {
       regdId: regdId,
     },
@@ -137,12 +132,76 @@ const deleteUser = async (regdId) => {
   await dynamoDB.delete(userParams).promise();
 };
 
+const updateUser = async (regdId, updates) => {
+  const tableName = "Users";
+
+  let updateExpression = "set";
+  const expressionAttributeNames = {};
+  const expressionAttributeValues = {};
+
+  for (const key in updates) {
+    updateExpression += ` #${key} = :${key},`;
+    expressionAttributeNames[`#${key}`] = key;
+    expressionAttributeValues[`:${key}`] = updates[key];
+  }
+
+  updateExpression = updateExpression.slice(0, -1);
+
+  const params = {
+    TableName: tableName,
+    Key: { regdId },
+    UpdateExpression: updateExpression,
+    ExpressionAttributeNames: expressionAttributeNames,
+    ExpressionAttributeValues: expressionAttributeValues,
+    ReturnValues: "ALL_NEW",
+  };
+
+  const result = await dynamoDB.update(params).promise();
+  return result.Attributes;
+};
+
+const logoutUser = async (email, token) => {
+  const user = await getUserByEmail(email);
+  user.tokens = user.tokens.filter((t) => t.token !== token);
+  const params = {
+    TableName: "Users",
+    Key: { regdId: user.regdId },
+    UpdateExpression: "set tokens = :tokens",
+    ExpressionAttributeValues: {
+      ":tokens": user.tokens
+    }
+  };
+
+  await dynamoDB.update(params).promise();
+  return user;
+};
+
+const logoutAllSessions = async (email) => {
+  const user = await getUserByEmail(email);
+  user.tokens = [];
+
+  const params = {
+    TableName: "Users",
+    Key: { regdId: user.regdId },
+    UpdateExpression: "set tokens = :tokens",
+    ExpressionAttributeValues: {
+      ":tokens": user.tokens
+    }
+  };
+
+  await dynamoDB.update(params).promise();
+  return user;
+};
+
 module.exports = {
+  init,
   createUser,
   getUserByEmail,
   generateAuthToken,
   findByCredentials,
   removeSensitiveData,
   deleteUser,
-  dynamoDB
+  updateUser,
+  logoutUser,
+  logoutAllSessions,
 };

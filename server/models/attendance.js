@@ -1,17 +1,14 @@
 const AWS = require('aws-sdk');
 const { v4: uuidv4 } = require('uuid');
 
-AWS.config.update({
-  region: process.env.AWS_REGION,
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  sessionToken:process.env.AWS_SESSION_TOKEN
-});
 
-const dynamoDB = new AWS.DynamoDB.DocumentClient();
+let dynamoDB;
+
+const init = (awsServices) => {
+  dynamoDB = awsServices.docClient;
+};
 const tableName = "Attendances";
 
-// Function to create a new attendance record
 const createAttendance = async (attendanceData) => {
   const attendance = {
     id: uuidv4(),
@@ -29,7 +26,6 @@ const createAttendance = async (attendanceData) => {
   return attendance;
 };
 
-// Function to get attendance records by subject ID
 const getAttendancesBySubject = async (subjectId) => {
   const params = {
     TableName: tableName,
@@ -44,7 +40,6 @@ const getAttendancesBySubject = async (subjectId) => {
   return result.Items;
 };
 
-// Function to update an attendance record by ID
 const updateAttendance = async (id, updateData) => {
   const updateExpression = Object.keys(updateData)
     .map((key) => `#${key} = :${key}`)
@@ -77,7 +72,6 @@ const updateAttendance = async (id, updateData) => {
   return result.Attributes;
 };
 
-// Function to delete an attendance record by ID
 const deleteAttendance = async (id) => {
   const params = {
     TableName: tableName,
@@ -88,6 +82,7 @@ const deleteAttendance = async (id) => {
 };
 
 module.exports = {
+  init,
   createAttendance,
   getAttendancesBySubject,
   updateAttendance,

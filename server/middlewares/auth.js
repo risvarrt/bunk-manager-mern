@@ -1,24 +1,27 @@
 const jwt = require('jsonwebtoken');
 const AWS = require('aws-sdk');
 const { findByCredentials } = require('../models/user');
+const { fetchSecrets, configureAWS } = require('../config');
 
-AWS.config.update({
-  region: process.env.AWS_REGION,
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  sessionToken:process.env.AWS_SESSION_TOKEN
-});
+let dynamoDB;
+let secrets;
 
-const dynamoDB = new AWS.DynamoDB.DocumentClient();
-const tableName = "Users";
+const initializeAWS = async () => {
+  secrets = await fetchSecrets();
+  configureAWS(secrets);
+  dynamoDB = new AWS.DynamoDB.DocumentClient();
+};
 
 const auth = async (req, res, next) => {
   try {
+    if (!dynamoDB) {
+      await initializeAWS();
+    }
     const token = req.header("Authorization").replace("Bearer ", "");
-    const decoded = jwt.verify(token, process.env.JWTKEY);
+    const decoded = jwt.verify(token, secrets.JWTKEY);
     const regdId = decoded._id;
     const params = {
-      TableName: tableName,
+      TableName: "Users",
       Key: {
         regdId: regdId
       }
@@ -30,7 +33,7 @@ const auth = async (req, res, next) => {
     if (!user || !user.tokens.some(t => t.token === token)) {
       throw new Error();
     }
-
+    
     req.user = user;
     req.token = token;
     next();

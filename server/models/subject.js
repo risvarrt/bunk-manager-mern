@@ -2,17 +2,13 @@ const AWS = require('aws-sdk');
 const { v4: uuidv4 } = require('uuid');
 
 
-AWS.config.update({
-  region: process.env.AWS_REGION,
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  sessionToken:process.env.AWS_SESSION_TOKEN
-});
-
-const dynamoDB = new AWS.DynamoDB.DocumentClient();
 const tableName = "Subjects";
 
-// Function to create a new subject
+let dynamoDB;
+
+const init = (awsServices) => {
+  dynamoDB = awsServices.docClient;
+};
 const createSubject = async (subjectData) => {
   const subject = {
     id: uuidv4(),
@@ -29,13 +25,11 @@ const createSubject = async (subjectData) => {
   return subject;
 };
 
-// Function to get a subject by ID
 const getSubjectById = async (id) => {
   const params = {
     TableName: tableName,
     Key: { id },
   };
-
   const result = await dynamoDB.get(params).promise();
   return result.Item;
 };
@@ -83,7 +77,6 @@ const updateSubject = async (id, updateData) => {
   }
 };
 
-// Function to delete a subject by ID
 const deleteSubject = async (id) => {
   const params = {
     TableName: tableName,
@@ -93,7 +86,6 @@ const deleteSubject = async (id) => {
   await dynamoDB.delete(params).promise();
 };
 
-// Function to get subjects by semester and owner
 const getSubjectsBySemester = async (owner, semester) => {
   if (!owner || !semester) {
     throw new Error("Both owner and semester are required.");
@@ -112,7 +104,6 @@ const getSubjectsBySemester = async (owner, semester) => {
       ":semester": semester.toString(), 
     },
   };
-
 
   try {
     const result = await dynamoDB.query(params).promise();
@@ -138,12 +129,10 @@ const deactivateSubjects = async (owner, semester) => {
     },
   };
 
-  console.log("Query Params:", JSON.stringify(params, null, 2)); // Add detailed logging
 
   try {
     const result = await dynamoDB.query(params).promise();
     const subjects = result.Items;
-    console.log("Query Result:", JSON.stringify(subjects, null, 2)); // Add detailed logging
 
     for (const subject of subjects) {
       await updateSubject(subject.id, { active: false });
@@ -180,13 +169,14 @@ const getAllSemesters = async (owner) => {
     throw error;
   }
 };
+
 module.exports = {
-  dynamoDB,
-  getAllSemesters,
+  init,
   createSubject,
   getSubjectById,
   updateSubject,
   deleteSubject,
   getSubjectsBySemester,
   deactivateSubjects,
+  getAllSemesters,
 };

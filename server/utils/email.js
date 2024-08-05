@@ -5,7 +5,7 @@ const email = (name, mail, department, roles, regdid) => {
     service: "gmail",
     auth: {
       user: "risvarrt@gmail.com",
-      pass: process.env.EMAIL_PASSWORD,
+      pass: "",
     },
     //activate in gmail "less secure app" option
   });

@@ -1,3 +1,4 @@
+const bcrypt = require('bcryptjs');
 const {
   createUser,
   findByCredentials,
@@ -5,7 +6,9 @@ const {
   getUserByEmail,
   deleteUser,
   removeSensitiveData,
-  dynamoDB 
+  updateUser,
+  logoutUser,
+  logoutAllSessions
 } = require('../models/user');
 const email = require('../utils/email');
 
@@ -23,8 +26,7 @@ const registerUser = async (req, res) => {
     const token = await generateAuthToken(user);
     res.status(201).send({ user: removeSensitiveData(user), token });
   } catch (e) {
-    console.error(e); // Log the detailed error
-    res.status(500).send({ msg: e.message }); // Send the error message in the response
+    res.status(500).send({ msg: e.message });
   }
 };
 
@@ -37,7 +39,7 @@ const removeUser = async (req, res) => {
   }
 };
 
-const updateUser = async (req, res) => {
+const updateUserController = async (req, res) => {
   const updates = Object.keys(req.body);
   const allowedUpdates = ["name", "password", "currentSemester"];
   const isValidOperation = updates.every((update) => {
@@ -47,39 +49,25 @@ const updateUser = async (req, res) => {
   if (!isValidOperation) {
     return res.status(500).send();
   }
+
   try {
     const user = await getUserByEmail(req.user.email);
     if (!user) {
       return res.status(400).send({ msg: "No such User Found" });
     }
+    const updatedFields = {};
     for (const update of updates) {
       if (update === "password") {
-        user.password = await bcrypt.hash(req.body[update], 8);
+        updatedFields[update] = await bcrypt.hash(req.body[update], 8);
       } else {
-        user[update] = req.body[update];
+        updatedFields[update] = req.body[update];
       }
     }
 
-    const params = {
-      TableName: "Users",
-      Key: { regdId: user.regdId },
-      UpdateExpression: "set #name = :name, #password = :password, #currentSemester = :currentSemester",
-      ExpressionAttributeNames: {
-        "#name": "name",
-        "#password": "password",
-        "#currentSemester": "currentSemester"
-      },
-      ExpressionAttributeValues: {
-        ":name": user.name,
-        ":password": user.password,
-        ":currentSemester": user.currentSemester
-      }
-    };
-
-    await dynamoDB.update(params).promise();
-    res.status(200).send({ user: removeSensitiveData(user) });
+    const updatedUser = await updateUser(user.regdId, updatedFields);
+    res.status(200).send({ user: removeSensitiveData(updatedUser) });
   } catch (e) {
-    res.status(400).send(e);
+    res.status(400).send({ msg: e.message });
   }
 };
 
@@ -89,53 +77,25 @@ const loginUser = async (req, res) => {
     const token = await generateAuthToken(user);
     res.status(200).send({ user: removeSensitiveData(user), token });
   } catch (e) {
-    console.error(e); // Log the detailed error
-    res.status(500).send({ msg: e.message }); // Send the error message in the response
+    console.error(e);
+    res.status(500).send({ msg: e.message });
   }
 };
 
 const logout = async (req, res) => {
   try {
-    const user = await getUserByEmail(req.user.email);
-
-    if (!user) {
-      return res.status(404).send({ msg: "User not found" });
-    }
-
-    user.tokens = user.tokens.filter((token) => token.token !== req.token);
-
-    const params = {
-      TableName: "Users",
-      Key: { regdId: user.regdId },
-      UpdateExpression: "set tokens = :tokens",
-      ExpressionAttributeValues: {
-        ":tokens": user.tokens
-      }
-    };
-
-    await dynamoDB.update(params).promise();
+    await logoutUser(req.user.email, req.token);
     res.send({ msg: "Logged out successfully" });
   } catch (e) {
-    console.error("Logout error:", e); // Log the detailed error
+    console.error("Logout error:", e);
     res.status(500).send({ msg: "Internal Server Error" });
   }
 };
+
 const logoutAll = async (req, res) => {
   try {
-    const user = await getUserByEmail(req.user.email);
-    user.tokens = [];
-
-    const params = {
-      TableName: "Users",
-      Key: { regdId: user.regdId },
-      UpdateExpression: "set tokens = :tokens",
-      ExpressionAttributeValues: {
-        ":tokens": user.tokens
-      }
-    };
-
-    await dynamoDB.update(params).promise();
-    res.send({ msg: "logged out successfully from all devices" });
+    await logoutAllSessions(req.user.email);
+    res.send({ msg: "Logged out successfully from all devices" });
   } catch (e) {
     res.status(500).send(e);
   }
@@ -153,7 +113,7 @@ const userData = async (req, res) => {
 module.exports = {
   registerUser,
   removeUser,
-  updateUser,
+  updateUser: updateUserController,
   loginUser,
   logout,
   logoutAll,

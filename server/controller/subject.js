@@ -7,7 +7,6 @@ const {
   deactivateSubjects,
   getAllSemesters
 } = require('../models/subject');
-const { uploadToS3 } = require('../utils/s3');
 const svgFile = require('../utils/svgFile');
 const subjectTemplate = require('../utils/subjectTemplate');
 const labTemplate = require('../utils/labTemplate');
