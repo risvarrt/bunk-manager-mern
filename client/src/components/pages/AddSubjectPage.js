@@ -42,7 +42,8 @@ const AddSubjectPage = (props) => {
   };
 
   const addSubject = (data) => {
-    data.semester = props.currentSem;
+    data.semester = props.currentSem.toString();
+    data.classesbunked =0 ;
     props.createActiveSubject(data);
   };
 

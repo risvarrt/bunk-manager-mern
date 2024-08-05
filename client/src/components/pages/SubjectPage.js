@@ -31,7 +31,6 @@ const useStyles = makeStyles((theme) => ({
 
 const SubjectPage = (props) => {
   const classes = useStyles();
-
   const containerVariants = {
     hidden: {
       opacity: 0,

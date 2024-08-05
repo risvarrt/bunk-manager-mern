@@ -26,7 +26,6 @@ const useStyles = makeStyles(theme => ({
 const TimetablePage = (props) => {
 
   const classes = useStyles();
-  console.log(props.tablePage)
 
   const containerVariants = {
     hidden: {

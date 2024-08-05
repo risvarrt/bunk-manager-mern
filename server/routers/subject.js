@@ -4,26 +4,30 @@ const auth = require("../middlewares/auth");
 const subjectRequest = require("../middlewares/subjectRequest");
 
 const {
-  createSubject,
+  getAllSemester,
+  createNewSubject,
   editSubject,
-  deleteSubject,
+  removeSubject,
   createTemplates,
   getSubjectBySemester,
-  getAllSemester,
   deactivateSubject,
-  deactivateAllSubject,
+  deactivateAllSubjects,
 } = require("../controller/subject");
 
-router.post("/api/subject/new", auth, createSubject);
+
+
+
+router.post('/api/subject/new', auth, createNewSubject);
 router.post("/api/subject/createTemplate", auth, createTemplates);
 router.get("/api/subject/:semester", auth, getSubjectBySemester);
+router.get("/api/semester/all", auth, getAllSemester);
+
 //router.get('/api.getSubject', auth,getSubject);
 router.patch("/api/subject/:id", auth, subjectRequest, editSubject);
-router.delete("/api/subject/:id", auth, subjectRequest, deleteSubject);
+router.delete("/api/subject/:id", auth, subjectRequest, removeSubject);
 
 //semester
-router.get("/api/semester/all", auth, getAllSemester);
 router.patch("/api/subject/deactivate/:id", auth, deactivateSubject);
-router.patch("/api/semester/deactivate", auth, deactivateAllSubject);
+router.patch("/api/semester/deactivate", auth, deactivateAllSubjects);
 
 module.exports = router;

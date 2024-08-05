@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import AttendanceBar from './AttendanceBar';
 import CardMenu from './CardMenu';
@@ -10,6 +9,10 @@ import IconButton from '@material-ui/core/IconButton';
 import MoreVertIcon from '@material-ui/icons/MoreVert';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
+import Button from '@material-ui/core/Button';
+import { connect } from 'react-redux';
+import { updateSubject } from '../../../actions/subjectActions';
+import { useLocation } from 'react-router-dom';
 
 const useStyles = makeStyles((theme) => ({
   card: {
@@ -35,7 +38,6 @@ const useStyles = makeStyles((theme) => ({
   upperCard: {
     width: "100%",
     position: "relative",
-    //minHeight:"70%",
     flexGrow: 1,
     display: "flex",
   },
@@ -44,7 +46,6 @@ const useStyles = makeStyles((theme) => ({
     flexDirection: "column",
     justifyContent: "center",
     padding: "0 15px",
-    //flexGrow: 1,
   },
   bgImage: {
     width: "100%",
@@ -64,12 +65,17 @@ const useStyles = makeStyles((theme) => ({
     marginTop: '-7rem',
     height: '35px',
     width: '35px'
-  }
+  },
+  button: {
+    margin: theme.spacing(1),
+  },
 }));
 
 const SubjectCard = (props) => {
   const classes = useStyles();
-  const [anchorEl, setAnchorEl] = React.useState(null);
+  const location = useLocation();
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [clickedToday, setClickedToday] = useState(false);
 
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -79,13 +85,33 @@ const SubjectCard = (props) => {
     setAnchorEl(null);
   };
 
+  useEffect(() => {
+    const today = new Date().toISOString().split('T')[0];
+    const clickedStatus = localStorage.getItem(`clicked_${props.data.id}`);
+    if (clickedStatus === today) {
+      setClickedToday(true);
+    } else {
+      setClickedToday(false);
+    }
+  }, [props.data.id]);
+
+  const handleBunkClass = () => {
+    const today = new Date().toISOString().split('T')[0];
+    const updatedData = {
+      classesbunked: props.data.classesbunked + 1,
+    };
+    props.updateSubject(updatedData, props.data.id);
+    localStorage.setItem(`clicked_${props.data.id}`, today);
+    setClickedToday(true);
+  };
+
   const {
     name,
     backgroundImage,
     semester,
     totalClasses,
-    classesBunked,
-    _id,
+    classesbunked,
+    id,
   } = props.data;
 
   const renderSvg = () => {
@@ -110,17 +136,27 @@ const SubjectCard = (props) => {
   };
 
   const renderEdit = () => {
-    if (window.location.pathname === "/subject") {
+    if (location.pathname === "/subject") {
       return (
         <React.Fragment>
-          <CardMenu data={{ id: _id }} />
+          <CardMenu data={{ id: id }} />
         </React.Fragment>
       );
     } else {
       return (
         <React.Fragment>
+          {location.pathname === "/" && !clickedToday && (
+            <Button
+              variant="contained"
+              color="secondary"
+              className={classes.button}
+              onClick={handleBunkClass}
+            >
+              Bunk Today Class
+            </Button>
+          )}
           <AttendanceBar
-            data={{ bunked: classesBunked, totalClass: totalClasses, id: _id }}
+            data={{ bunked: classesbunked, totalClass: totalClasses, id: id }}
           />
         </React.Fragment>
       );
@@ -130,17 +166,15 @@ const SubjectCard = (props) => {
   return (
     <React.Fragment>
       <Card className={classes.card}>
-      <Menu
-        id="simple-menu"
-        anchorEl={anchorEl}
-        keepMounted
-        open={Boolean(anchorEl)}
-        onClose={handleClose}
-      >
-        <MenuItem onClick={handleClose}>Change Pic</MenuItem>
-        <MenuItem onClick={handleClose}>Change Pic</MenuItem>
-        <MenuItem onClick={handleClose}>Change Pic</MenuItem>
-      </Menu>
+        <Menu
+          id="simple-menu"
+          anchorEl={anchorEl}
+          keepMounted
+          open={Boolean(anchorEl)}
+          onClose={handleClose}
+        >
+          <MenuItem onClick={handleClose}>Change Pic</MenuItem>
+        </Menu>
         <div className={classes.upperCard}>
           <CardContent className={classes.CardContent}>
             <Typography className={classes.CardSubject} variant="h5">
@@ -159,5 +193,4 @@ const SubjectCard = (props) => {
   );
 };
 
-export default SubjectCard;
-//data:image/svg+xml;base64,
+export default connect(null, { updateSubject })(SubjectCard);

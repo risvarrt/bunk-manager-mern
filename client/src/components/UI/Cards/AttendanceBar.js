@@ -46,7 +46,7 @@ const AttendanceBar = (props) => {
     if (totalClass === 0) {
       return 30;
     } else {
-      return (bunked / totalClass) * 100;
+      return ((totalClass-bunked) / totalClass) * 100;
     }
   };
 

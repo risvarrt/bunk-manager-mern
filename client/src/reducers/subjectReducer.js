@@ -37,7 +37,7 @@ export default (state = initialState, action) => {
         ...state,
         isCreating: false,
         hasBeenCreated: true,
-        subjects: { ...state.subjects, [action.payload._id]: action.payload },
+        subjects: { ...state.subjects, [action.payload.id]: action.payload },
       };
 
     case SUBJECT_LOADING:
@@ -48,8 +48,9 @@ export default (state = initialState, action) => {
 
     case SUBJECT_LOADED: {
       const subjectObj = _.mapKeys(action.payload, (value) => {
-        return value._id;
+        return value.id;
       });
+      console.log(action.payload)
       return { ...state, isLoading: false, subjects: subjectObj };
     }
 
@@ -58,7 +59,7 @@ export default (state = initialState, action) => {
 
     case SEMESTER_LOADED: {
       let newObj = _.mapKeys(action.payload, (value) => {
-        return value._id;
+        return value.id;
       });
       return { ...state, isLoading: false, semester: { ...newObj } };
     }
@@ -71,12 +72,12 @@ export default (state = initialState, action) => {
         ...state,
         isUpdating: false,
         hasBeenUpdated: true,
-        subjects: { ...state.subjects, [action.payload._id]: action.payload },
+        subjects: { ...state.subjects, [action.payload.id]: action.payload },
       };
 
     case SUBJECT_DELETED: {
       const newObjAfterDeletion = _.omit({ ...state.subjects }, [
-        action.payload._id,
+        action.payload.id,
       ]);
       return { ...state, isLoading: false, subjects: newObjAfterDeletion };
     }

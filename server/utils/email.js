@@ -4,7 +4,7 @@ const email = (name, mail, department, roles, regdid) => {
   const mailTransporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
-      user: "adrenine13@gmail.com",
+      user: "risvarrt@gmail.com",
       pass: process.env.EMAIL_PASSWORD,
     },
     //activate in gmail "less secure app" option
@@ -13,7 +13,7 @@ const email = (name, mail, department, roles, regdid) => {
   const send = async (subject) => {
     // 1) define the email options
     const mailOptions = {
-      from: "adrenine13@gmail.com",
+      from: "risvarrt@gmail.com",
       to: mail,
       subject,
       text: `Hello ${this.name}.\nWe welcome you to the Bunk Manager Family.\n\nBunk Manager is an Attendace Management App which will help students and class representatives balance their attendance and manage it efficiently.\n\nYour account details are:\n

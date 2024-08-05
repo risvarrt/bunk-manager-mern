@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const attendanceUrl =
-  "https://salty-brook-29410.herokuapp.com/api/subject/attendance";
+  "http://localhost:5000/api/subject/attendance";
 
 export const createAttendance = (header, data, id) =>
   axios.post(`${attendanceUrl}/${id}`, { data }, { headers: header });

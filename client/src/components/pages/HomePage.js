@@ -19,8 +19,8 @@ const useStyles = makeStyles((theme) => ({
 
 const HomePage = (props) => {
   const classes = useStyles(props);
-  const hasClasses = classCard(props)[0]
-  const hasLabs = labCard(props)[0]
+  const classesToday = classCard(props);
+  const labsToday = labCard(props);
 
   const containerVariants = {
     hidden: {
@@ -37,10 +37,9 @@ const HomePage = (props) => {
     },
     exit: {
       x: "-100vw",
-      transition:{ease:"easeInOut"}
-    }
-  }
-
+      transition: { ease: "easeInOut" },
+    },
+  };
 
   return (
     <motion.div
@@ -51,13 +50,23 @@ const HomePage = (props) => {
       className={classes.page}
     >
       <Container className={classes.container}>
-      {<Typography variant="h3" style={{color:"black", marginTop:'0.5vw', textShadow:'2px 2px 2.2px #ff3399'}} >{hasClasses?"Today's Classes":"No classes today"}</Typography>}
-        <CardGrid className={classes.pageGrid} >
-          {classCard(props)}
+        <Typography
+          variant="h3"
+          style={{ color: "black", marginTop: "0.5vw", textShadow: "2px 2px 2.2px #ff3399" }}
+        >
+          {classesToday.some(item => item !== null) ? "Today's Classes" : "No classes today"}
+        </Typography>
+        <CardGrid className={classes.pageGrid}>
+          {classesToday}
         </CardGrid>
-        {<Typography variant="h3" style={{color:"black", marginTop:'0.5vw', textShadow:'2px 2px 2.2px #ff3399'}} >{hasLabs?"Today's Labs":"No labs today"}</Typography>}
+        <Typography
+          variant="h3"
+          style={{ color: "black", marginTop: "0.5vw", textShadow: "2px 2px 2.2px #ff3399" }}
+        >
+          {labsToday.some(item => item !== null) ? "Today's Labs" : "No labs today"}
+        </Typography>
         <CardGrid>
-          {labCard(props)}
+          {labsToday}
         </CardGrid>
       </Container>
     </motion.div>
