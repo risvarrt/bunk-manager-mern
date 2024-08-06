@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const url = "http://localhost:5000/api/auth";
+const url = "http://34.224.65.142:5000/api/auth";
 
 export const createUser = (userData) =>
   axios.post(`${url}/new/signup`, userData);

@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const attendanceUrl =
-  "http://localhost:5000/api/subject/attendance";
+  "http://34.224.65.142:5000/api/subject/attendance";
 
 export const createAttendance = (header, data, id) =>
   axios.post(`${attendanceUrl}/${id}`, { data }, { headers: header });

@@ -1,7 +1,7 @@
 import axios from "axios";
 
-const subjectUrl = "http://localhost:5000/api/subject";
-const semesterUrl = "http://localhost:5000/api/semester";
+const subjectUrl = "http://34.224.65.142:5000/api/subject";
+const semesterUrl = "http://34.224.65.142:5000/api/semester";
 
 export const createTemplate = (header, semester) =>
   axios.post(
