@@ -1,7 +1,7 @@
 import axios from "axios";
 
-const subjectUrl = "http://bunk-be-asg-final-load-1502554748.us-east-1.elb.amazonaws.com:5000/api/subject";
-const semesterUrl = "http://bunk-be-asg-final-load-1502554748.us-east-1.elb.amazonaws.com:5000/api/semester";
+const subjectUrl = "http://bunk-asg-be-1-1936233079.us-east-1.elb.amazonaws.com:5000/api/subject";
+const semesterUrl = "http://bunk-asg-be-1-1936233079.us-east-1.elb.amazonaws.com:5000/api/semester";
 
 export const createTemplate = (header, semester) =>
   axios.post(

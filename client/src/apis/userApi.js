@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const url = "http://bunk-be-asg-final-load-1502554748.us-east-1.elb.amazonaws.com:5000/api/auth";
+const url = "http://bunk-asg-be-1-1936233079.us-east-1.elb.amazonaws.com:5000/api/auth";
 
 export const createUser = (userData) =>
   axios.post(`${url}/new/signup`, userData);
